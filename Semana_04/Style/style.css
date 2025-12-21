@@ -1,0 +1,91 @@
+body {
+    background-color: #02559e;
+}
+
+.img-centro {
+    display: block;
+    margin: auto;
+}
+
+h1 {
+    color: white;
+    text-align: center;
+}
+h2 {
+    color: white;
+    text-align: center;
+}
+.Titulo-Destacado{
+    background-color: white;
+    padding: 20px;
+    width: 120%;
+    margin: 0;
+    box-sizing: border-box;
+    font-style: oblique;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+.Titulo-Destacado .parte-uno {
+    color: #02559e;
+    font-weight: bold;
+}
+.Titulo-Destacado .parte-dos {
+    color: #000000;
+    font-weight: bold;
+}
+.Subtitulo {
+    color: rgb(8, 8, 8);
+    text-align: center;
+    font-family: 'Arial Black', Gadget, sans-serif;
+    font-weight: bold;
+}
+.Subtitulo .parte-uno {
+    color: #0611a5f1;
+}
+.Subtitulo .parte-dos {
+    color: #0611a5f1;
+}
+
+h2 {
+    font-family: 'Arial Black', Gadget, sans-serif;
+    font-weight: bold;
+}
+h1 {
+    font-family: 'Arial Black', Gadget, sans-serif;
+    font-weight: bold;
+}
+
+
+.titulo-destacado-oscuro {
+    background-color: rgba(0, 0, 0, 0.829);
+    padding: 20px;
+    font-family: 'Arial Black', Gadget, sans-serif;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+}
+.titulo-destacado-oscuro .parte-dos {
+    color: #0597dbe5;
+}
+p {
+    color: rgba(0, 0, 0, 0.952);
+    text-align: center;
+    font-family: 'Arial Black', Gadget, sans-serif;
+    font-weight: bold;
+}
+p {
+    font-size: 20px;
+
+}
+.texto-parrafo {
+    color: rgba(0, 0, 0, 0.952);
+    text-align: center;
+    font-family: 'Arial Black', Gadget, sans-serif;
+    font-weight: bold;
+    font-size: 20px;
+}
+.texto-parrafo .parte-uno {
+    color: #0404a0f1;
+}
+.texto-parrafo .parte-dos {
+    color: #0404a0f1;
+}
