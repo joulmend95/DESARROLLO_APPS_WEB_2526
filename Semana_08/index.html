@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarea Semana 08</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">Mi Tienda</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#inicio">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#productos">Productos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contacto">Contacto</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <div class="container my-5">
+        <!-- Título -->
+        <div class="text-center mb-4" id="inicio">
+            <h1>Bienvenido a Nuestra Tienda</h1>
+            <p>Descubre productos increíbles</p>
+            <button id="btnAlerta" class="btn btn-warning">Haz clic aquí</button>
+        </div>
+
+        <!-- Carrusel -->
+        <div id="carouselExampleCaptions" class="carousel slide mb-4" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0" class="active"></button>
+                <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1"></button>
+                <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2"></button>
+            </div>
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <img src="https://datos.gob.es/sites/default/files/styles/wide/public/blog/image/04_0.jpg?itok=8FmuVgOz" class="d-block w-100" alt="Imagen 1">
+                    <div class="carousel-caption d-none d-md-block">
+                        <h5>Desarrollo Web</h5>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="https://marcalima.pe/wp-content/uploads/2024/03/el-desarrollo-web.png" class="d-block w-100" alt="Imagen 2">
+                    <div class="carousel-caption d-none d-md-block">
+                        <h5>Tecnología</h5>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <img src="https://www.qualitydevs.com/wp-content/uploads/2018/06/Desarrollo-Web.jpg" class="d-block w-100" alt="Imagen 3">
+                    <div class="carousel-caption d-none d-md-block">
+                        <h5>Diseño</h5>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+        </div>
+
+        <!-- Tabla de Productos -->
+        <div id="productos" class="my-4">
+            <h2 class="text-center mb-3">Nuestros Productos</h2>
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Laptop Dell XPS 15</td>
+                        <td>Tecnología</td>
+                        <td>$1,299.99</td>
+                        <td><span class="badge bg-success">Disponible</span></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>iPhone 15 Pro</td>
+                        <td>Móviles</td>
+                        <td>$999.00</td>
+                        <td><span class="badge bg-warning text-dark">Pocas unidades</span></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Monitor Samsung 4K</td>
+                        <td>Accesorios</td>
+                        <td>$449.99</td>
+                        <td><span class="badge bg-success">Disponible</span></td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>Teclado Mecánico</td>
+                        <td>Periféricos</td>
+                        <td>$129.99</td>
+                        <td><span class="badge bg-danger">Agotado</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Formulario de Contacto -->
+        <div id="contacto" class="my-4">
+            <h2 class="text-center mb-3">Formulario de Contacto</h2>
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <form id="contactForm">
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" id="nombre" required>
+                            <div class="invalid-feedback">Por favor ingresa tu nombre.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" required>
+                            <div class="invalid-feedback">Por favor ingresa un email válido.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="mensaje" class="form-label">Mensaje *</label>
+                            <textarea class="form-control" id="mensaje" rows="4" required></textarea>
+                            <div class="invalid-feedback">Por favor escribe un mensaje.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Enviar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pie de Página -->
+    <footer class="bg-dark text-white py-3 mt-4">
+        <div class="container text-center">
+            <p>Contacto: info@mitienda.com | Tel: +593 123 456 789</p>
+            <p>&copy; 2026 Mi Tienda. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
