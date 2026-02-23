@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Compra Confirmada - Mundo Digital{% endblock %}
+
+{% block content %}
+    <h1>¡Gracias por tu compra!</h1>
+    <p>Tu pedido ha sido confirmado y está en proceso.</p>
+    <a href="{{ url_for('home') }}">Volver al Inicio</a>
+{% endblock %}

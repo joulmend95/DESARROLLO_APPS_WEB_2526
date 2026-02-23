@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - Mundo Digital{% endblock %}
+
+{% block content %}
+    <h1>Proceso de Pago</h1>
+    <p>Por favor, completa tus datos para finalizar la compra.</p>
+    <form action="{{ url_for('confirmar_checkout') }}" method="GET">
+        <button type="submit">Confirmar Compra</button>
+    </form>
+{% endblock %}

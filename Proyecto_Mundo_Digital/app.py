@@ -1,22 +1,22 @@
-from flask import Flask
+from flask import Flask, render_template
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return 'Bienvenido a tu tienda online ¡Mundo Digital!'
+    return render_template('index.html')
 
-@app.route('/producto/<nombre>')
-def producto(nombre):
-    return f'Producto: {nombre}! - diponible en nuestra tienda online' 
+@app.route('/about')
+def about():
+    return render_template('about.html')
 
 @app.route('/catalogo')
 def catalogo():
-    productos = ['Laptop Asus', 'Laptop Lenovo', 'Mouse Logitech', 'Auriculares Soundcore']
-    return f'Catálogo de productos: {", ".join(productos)}'
+    lista_productos = ['Laptop Asus', 'Laptop Lenovo', 'Mouse Logitech', 'Auriculares Soundcore']
+    return render_template('catalogo.html', productos=lista_productos)
 
 @app.route('/carrito')
 def carrito():
-    return 'Carrito de compras'
+    return render_template('carrito.html')
 
 @app.route('/carrito/agregar/<producto>')
 def agregar_producto(producto):
@@ -28,15 +28,15 @@ def eliminar_producto(producto):
 
 @app.route('/checkout')
 def checkout():
-    return 'Proceso de pago'
+    return render_template('checkout.html')
 
 @app.route('/checkout/confirmar')
 def confirmar_checkout():
-    return 'Compra confirmada'
+    return render_template('confirmar_checkout.html')
 
 @app.route('/contacto')
 def contacto():
-    return 'Información de contacto'
+    return render_template('contacto.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

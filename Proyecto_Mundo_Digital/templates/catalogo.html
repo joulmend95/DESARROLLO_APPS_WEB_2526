@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogo - Mundo Digital{% endblock %}
+
+{% block content %}
+    <h1>Nuestro Catálogo de Productos</h1>
+    <p>Explora nuestra selección de productos tecnológicos:</p>
+    <ul>
+        {% for producto in productos %}
+            <li>{{ producto }}</li>
+        {% else %}
+            <li>No hay productos disponibles en este momento.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}
