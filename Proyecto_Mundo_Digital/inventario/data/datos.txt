@@ -1,0 +1,5 @@
+# Inventario de Productos - Formato TXT
+# Formato: ID|Nombre|Cantidad|Precio|Categoria
+#============================================================
+1|Mouse_Logitec|5|22.5|General
+2|Teclado_Logitec|8|26.75|General

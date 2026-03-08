@@ -10,10 +10,13 @@
         <nav>
             <a href="{{ url_for('home') }}">Inicio</a>
             <a href="{{ url_for('catalogo') }}">Catálogo</a>
-            <a href="{{ url_for('contacto') }}">Contacto</a>
+            <a href="{{ url_for('contactos') }}">Contacto</a>
             <a href="{{ url_for('about') }}">Nosotros</a>
             <a href="{{ url_for('carrito') }}">Carrito</a>
+            <a href="{{ url_for('listar_productos') }}">Productos</a>
             <a href="{{ url_for('listar_inventario') }}">Inventario Admin</a>
+            <a href="{{ url_for('ver_datos') }}">Datos</a>
+            <a href="{{ url_for('sqlalchemy_home') }}">SQLAlchemy</a>
         </nav>
     </header>
 

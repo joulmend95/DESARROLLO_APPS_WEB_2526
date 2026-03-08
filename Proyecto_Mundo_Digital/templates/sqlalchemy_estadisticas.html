@@ -1,0 +1,554 @@
+{% extends 'base.html' %}
+
+{% block title %}Estadísticas - SQLAlchemy{% endblock %}
+
+{% block content %}
+<div class="estadisticas-container">
+    <div class="header-section">
+        <div>
+            <h1>📊 Estadísticas del Inventario</h1>
+            <p class="subtitle">Análisis detallado de los productos y el inventario</p>
+        </div>
+        <a href="{{ url_for('sqlalchemy_home') }}" class="btn btn-secondary">
+            ← Volver al Inventario
+        </a>
+    </div>
+
+    <!-- Estadísticas Generales -->
+    <div class="section-title">
+        <h2>📈 Resumen General</h2>
+    </div>
+    <div class="stats-grid">
+        <div class="stat-card card-total">
+            <div class="stat-icon">📦</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ estadisticas.total_productos }}</div>
+                <div class="stat-label">Total de Productos</div>
+            </div>
+        </div>
+        <div class="stat-card card-stock">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ estadisticas.total_stock }}</div>
+                <div class="stat-label">Unidades en Stock</div>
+            </div>
+        </div>
+        <div class="stat-card card-valor">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+                <div class="stat-value">${{ "%.2f"|format(estadisticas.valor_inventario) }}</div>
+                <div class="stat-label">Valor Total del Inventario</div>
+            </div>
+        </div>
+        <div class="stat-card card-categorias">
+            <div class="stat-icon">🏷️</div>
+            <div class="stat-content">
+                <div class="stat-value">{{ estadisticas.num_categorias }}</div>
+                <div class="stat-label">Categorías Activas</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado del Inventario -->
+    <div class="section-title">
+        <h2>🚦 Estado del Inventario</h2>
+    </div>
+    <div class="status-grid">
+        <div class="status-card status-disponible">
+            <div class="status-header">
+                <span class="status-icon">✅</span>
+                <span class="status-title">Disponibles</span>
+            </div>
+            <div class="status-value">{{ estadisticas.productos_disponibles }}</div>
+            <div class="status-footer">Stock adecuado</div>
+        </div>
+        <div class="status-card status-poco-stock">
+            <div class="status-header">
+                <span class="status-icon">⚠️</span>
+                <span class="status-title">Poco Stock</span>
+            </div>
+            <div class="status-value">{{ estadisticas.productos_poco_stock }}</div>
+            <div class="status-footer">Considerar reposición</div>
+        </div>
+        <div class="status-card status-agotado">
+            <div class="status-header">
+                <span class="status-icon">❌</span>
+                <span class="status-title">Agotados</span>
+            </div>
+            <div class="status-value">{{ estadisticas.productos_agotados }}</div>
+            <div class="status-footer">Requiere atención</div>
+        </div>
+    </div>
+
+    <!-- Productos por Categoría -->
+    <div class="section-title">
+        <h2>📂 Distribución por Categorías</h2>
+    </div>
+    {% if estadisticas.productos_por_categoria %}
+    <div class="categorias-grid">
+        {% for categoria in estadisticas.productos_por_categoria %}
+        <div class="categoria-card">
+            <div class="categoria-header">
+                <span class="categoria-nombre">{{ categoria.categoria }}</span>
+                <span class="categoria-badge">{{ categoria.total }} productos</span>
+            </div>
+            <div class="categoria-stats">
+                <div class="categoria-stat">
+                    <span class="stat-label-small">Stock Total</span>
+                    <span class="stat-value-small">{{ categoria.total_stock }} unidades</span>
+                </div>
+                <div class="categoria-stat">
+                    <span class="stat-label-small">Valor Total</span>
+                    <span class="stat-value-small valor">${{ "%.2f"|format(categoria.valor_total) }}</span>
+                </div>
+            </div>
+            <div class="categoria-bar">
+                <div class="bar-fill" style="width: {{ (categoria.total / estadisticas.total_productos * 100)|round }}%"></div>
+            </div>
+            <div class="categoria-percentage">
+                {{ (categoria.total / estadisticas.total_productos * 100)|round(1) }}% del inventario
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-data">
+        <p>No hay productos categorizados</p>
+    </div>
+    {% endif %}
+
+    <!-- Top Productos -->
+    <div class="section-title">
+        <h2>🏆 Top Productos</h2>
+    </div>
+    <div class="top-products-grid">
+        <div class="top-card">
+            <h3>💎 Mayor Valor</h3>
+            {% if estadisticas.producto_mayor_valor %}
+            <div class="product-info">
+                <p class="product-name">{{ estadisticas.producto_mayor_valor.nombre }}</p>
+                <p class="product-detail">{{ estadisticas.producto_mayor_valor.cantidad }} unidades × ${{ "%.2f"|format(estadisticas.producto_mayor_valor.precio) }}</p>
+                <p class="product-total">${{ "%.2f"|format(estadisticas.producto_mayor_valor.cantidad * estadisticas.producto_mayor_valor.precio) }}</p>
+                <a href="{{ url_for('sqlalchemy_detalle', producto_id=estadisticas.producto_mayor_valor.id) }}" class="btn-link">Ver Detalle →</a>
+            </div>
+            {% else %}
+            <p class="no-data-small">No disponible</p>
+            {% endif %}
+        </div>
+
+        <div class="top-card">
+            <h3>📦 Mayor Stock</h3>
+            {% if estadisticas.producto_mayor_stock %}
+            <div class="product-info">
+                <p class="product-name">{{ estadisticas.producto_mayor_stock.nombre }}</p>
+                <p class="product-detail">{{ estadisticas.producto_mayor_stock.cantidad }} unidades</p>
+                <p class="product-total">${{ "%.2f"|format(estadisticas.producto_mayor_stock.precio) }} c/u</p>
+                <a href="{{ url_for('sqlalchemy_detalle', producto_id=estadisticas.producto_mayor_stock.id) }}" class="btn-link">Ver Detalle →</a>
+            </div>
+            {% else %}
+            <p class="no-data-small">No disponible</p>
+            {% endif %}
+        </div>
+
+        <div class="top-card">
+            <h3>💸 Mayor Precio</h3>
+            {% if estadisticas.producto_mayor_precio %}
+            <div class="product-info">
+                <p class="product-name">{{ estadisticas.producto_mayor_precio.nombre }}</p>
+                <p class="product-detail">{{ estadisticas.producto_mayor_precio.categoria }}</p>
+                <p class="product-total">${{ "%.2f"|format(estadisticas.producto_mayor_precio.precio) }}</p>
+                <a href="{{ url_for('sqlalchemy_detalle', producto_id=estadisticas.producto_mayor_precio.id) }}" class="btn-link">Ver Detalle →</a>
+            </div>
+            {% else %}
+            <p class="no-data-small">No disponible</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Indicadores Adicionales -->
+    <div class="section-title">
+        <h2>🎯 Indicadores Clave</h2>
+    </div>
+    <div class="indicadores-grid">
+        <div class="indicador-card">
+            <div class="indicador-label">Precio Promedio</div>
+            <div class="indicador-value">${{ "%.2f"|format(estadisticas.precio_promedio) if estadisticas.precio_promedio else '0.00' }}</div>
+        </div>
+        <div class="indicador-card">
+            <div class="indicador-label">Stock Promedio</div>
+            <div class="indicador-value">{{ estadisticas.stock_promedio|round(1) if estadisticas.stock_promedio else 0 }} unidades</div>
+        </div>
+        <div class="indicador-card">
+            <div class="indicador-label">Valor Promedio por Producto</div>
+            <div class="indicador-value">${{ "%.2f"|format(estadisticas.valor_promedio) if estadisticas.valor_promedio else '0.00' }}</div>
+        </div>
+        <div class="indicador-card">
+            <div class="indicador-label">Rotación del Inventario</div>
+            <div class="indicador-value">{{ estadisticas.rotacion|round(1) if estadisticas.rotacion else 0 }}%</div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .estadisticas-container {
+        max-width: 1400px;
+        margin: 30px auto;
+        padding: 20px;
+    }
+
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .header-section h1 {
+        color: #667eea;
+        margin: 0 0 5px 0;
+    }
+
+    .subtitle {
+        color: #6c757d;
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .section-title {
+        margin: 40px 0 20px 0;
+    }
+
+    .section-title h2 {
+        color: #495057;
+        font-size: 22px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #667eea;
+        display: inline-block;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: transform 0.3s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-icon {
+        font-size: 48px;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 16px;
+    }
+
+    .card-total .stat-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .card-stock .stat-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .card-valor .stat-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .card-categorias .stat-icon { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #212529;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 14px;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+
+    /* Status Grid */
+    .status-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .status-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        border-left: 5px solid;
+    }
+
+    .status-disponible { border-left-color: #28a745; }
+    .status-poco-stock { border-left-color: #ffc107; }
+    .status-agotado { border-left-color: #dc3545; }
+
+    .status-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .status-icon {
+        font-size: 24px;
+    }
+
+    .status-title {
+        font-weight: 600;
+        color: #495057;
+        font-size: 16px;
+    }
+
+    .status-value {
+        font-size: 42px;
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 8px;
+    }
+
+    .status-footer {
+        color: #6c757d;
+        font-size: 13px;
+    }
+
+    /* Categorías Grid */
+    .categorias-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .categoria-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .categoria-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .categoria-nombre {
+        font-size: 18px;
+        font-weight: 700;
+        color: #495057;
+    }
+
+    .categoria-badge {
+        background: #e9ecef;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .categoria-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .categoria-stat {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .stat-label-small {
+        font-size: 11px;
+        color: #6c757d;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+
+    .stat-value-small {
+        font-size: 16px;
+        font-weight: 700;
+        color: #495057;
+    }
+
+    .stat-value-small.valor {
+        color: #28a745;
+    }
+
+    .categoria-bar {
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+
+    .bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.5s;
+    }
+
+    .categoria-percentage {
+        text-align: right;
+        font-size: 12px;
+        color: #6c757d;
+        font-weight: 600;
+    }
+
+    /* Top Products */
+    .top-products-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .top-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .top-card h3 {
+        margin: 0 0 20px 0;
+        color: #667eea;
+        font-size: 18px;
+        text-align: center;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f8f9fa;
+    }
+
+    .product-info {
+        text-align: center;
+    }
+
+    .product-name {
+        font-weight: 700;
+        color: #212529;
+        font-size: 16px;
+        margin: 0 0 8px 0;
+    }
+
+    .product-detail {
+        color: #6c757d;
+        font-size: 13px;
+        margin: 0 0 12px 0;
+    }
+
+    .product-total {
+        font-size: 24px;
+        font-weight: 700;
+        color: #28a745;
+        margin: 15px 0;
+    }
+
+    .btn-link {
+        display: inline-block;
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        margin-top: 10px;
+    }
+
+    .btn-link:hover {
+        text-decoration: underline;
+    }
+
+    .no-data-small {
+        text-align: center;
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    /* Indicadores */
+    .indicadores-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+
+    .indicador-card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .indicador-label {
+        font-size: 13px;
+        color: #6c757d;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .indicador-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    @media (max-width: 1200px) {
+        .stats-grid,
+        .indicadores-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .top-products-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid,
+        .status-grid,
+        .categorias-grid,
+        .indicadores-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-card {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}

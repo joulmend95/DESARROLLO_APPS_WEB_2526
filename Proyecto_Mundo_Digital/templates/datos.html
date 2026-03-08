@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+
+{% block title %}Persistencia de Datos - Mundo Digital{% endblock %}
+
+{% block content %}
+<div class="datos-container">
+    <h1>Persistencia de Datos</h1>
+    <p>Visualiza cómo los datos se almacenan en diferentes formatos (TXT, JSON, CSV)</p>
+
+    <!-- Mostrar mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Botones de acción principales -->
+    <section class="actions-section main-actions">
+        <h2>🔄 Gestión de Persistencia</h2>
+        <div class="button-group">
+            <a href="{{ url_for('sincronizar_datos') }}" class="btn-sync" 
+               onclick="return confirm('¿Desea sincronizar todos los datos con los archivos?')">
+               Sincronizar Todo
+            </a>
+        </div>
+    </section>
+
+    <!-- Sección TXT -->
+    <section class="data-section">
+        <h2>📄 Datos en formato TXT</h2>
+        <div class="data-box">
+            {% if datos_txt %}
+                <pre>{{ datos_txt }}</pre>
+            {% else %}
+                <p class="no-data">No hay datos disponibles en formato TXT</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Sección JSON -->
+    <section class="data-section">
+        <h2>📋 Datos en formato JSON</h2>
+        <div class="data-box">
+            {% if datos_json %}
+                <pre>{{ datos_json | tojson(indent=2) }}</pre>
+            {% else %}
+                <p class="no-data">No hay datos disponibles en formato JSON</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Sección CSV -->
+    <section class="data-section">
+        <h2>📊 Datos en formato CSV</h2>
+        <div class="data-box">
+            {% if datos_csv %}
+                <table class="csv-table">
+                    <thead>
+                        <tr>
+                            {% for header in datos_csv[0] %}
+                                <th>{{ header }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in datos_csv[1:] %}
+                            <tr>
+                                {% for cell in row %}
+                                    <td>{{ cell }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="no-data">No hay datos disponibles en formato CSV</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Botones de acción -->
+    <section class="actions-section">
+        <h2>📥 Exportar Datos del Inventario Actual</h2>
+        <p>Descarga los datos del inventario en diferentes formatos</p>
+        <div class="button-group">
+            <a href="{{ url_for('exportar_datos', formato='txt') }}" class="btn-export">⬇️ Exportar a TXT</a>
+            <a href="{{ url_for('exportar_datos', formato='json') }}" class="btn-export">⬇️ Exportar a JSON</a>
+            <a href="{{ url_for('exportar_datos', formato='csv') }}" class="btn-export">⬇️ Exportar a CSV</a>
+        </div>
+    </section>
+
+    <!-- Botones de importación -->
+    <section class="actions-section">
+        <h2>📤 Importar Datos desde Archivos</h2>
+        <p>Carga productos desde archivos a la base de datos</p>
+        <div class="button-group">
+            <a href="{{ url_for('importar_datos', formato='txt') }}" class="btn-import" 
+               onclick="return confirm('¿Desea importar productos desde el archivo TXT?')">
+               📄 Importar desde TXT
+            </a>
+            <a href="{{ url_for('importar_datos', formato='json') }}" class="btn-import"
+               onclick="return confirm('¿Desea importar productos desde el archivo JSON?')">
+               📋 Importar desde JSON
+            </a>
+            <a href="{{ url_for('importar_datos', formato='csv') }}" class="btn-import"
+               onclick="return confirm('¿Desea importar productos desde el archivo CSV?')">
+               📊 Importar desde CSV
+            </a>
+        </div>
+    </section>
+</div>
+
+<style>
+    .datos-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .data-section {
+        margin-bottom: 40px;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+    }
+
+    .data-section h2 {
+        color: #333;
+        margin-bottom: 15px;
+    }
+
+    .data-box {
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        overflow-x: auto;
+    }
+
+    .data-box pre {
+        margin: 0;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #333;
+    }
+
+    .csv-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .csv-table th,
+    .csv-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .csv-table th {
+        background-color: #333;
+        color: white;
+        font-weight: bold;
+    }
+
+    .csv-table tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    .no-data {
+        text-align: center;
+        color: #666;
+        padding: 20px;
+        font-style: italic;
+    }
+
+    .actions-section {
+        padding: 30px;
+        background: #e9ecef;
+        border-radius: 8px;
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .actions-section.main-actions {
+        background: #d1ecf1;
+        border: 2px solid #bee5eb;
+    }
+
+    .actions-section h2 {
+        margin-bottom: 10px;
+    }
+
+    .actions-section p {
+        color: #666;
+        margin-bottom: 15px;
+        font-size: 14px;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .btn-export, .btn-import, .btn-sync {
+        display: inline-block;
+        padding: 12px 24px;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+
+    .btn-export {
+        background-color: #28a745;
+    }
+
+    .btn-export:hover {
+        background-color: #218838;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-import {
+        background-color: #007bff;
+    }
+
+    .btn-import:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-sync {
+        background-color: #ffc107;
+        color: #333;
+        font-size: 16px;
+        padding: 14px 28px;
+    }
+
+    .btn-sync:hover {
+        background-color: #e0a800;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Estilos para mensajes flash */
+    .flash-messages {
+        margin-bottom: 20px;
+    }
+
+    .alert {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+</style>
+{% endblock %}

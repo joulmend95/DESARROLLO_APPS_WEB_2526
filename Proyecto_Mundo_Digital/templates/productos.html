@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+
+{% block title %}Productos - Mundo Digital{% endblock %}
+
+{% block content %}
+<div class="productos-container">
+    <h1>Gestión de Productos</h1>
+
+    <!-- Formulario de búsqueda -->
+    <section class="search-section">
+        <h2>Buscar Producto</h2>
+        <form method="GET" action="{{ url_for('buscar_productos') }}">
+            <input type="text" name="busqueda" placeholder="Buscar por nombre..." value="{{ busqueda if busqueda else '' }}">
+            <button type="submit">Buscar</button>
+            <a href="{{ url_for('listar_productos') }}" class="btn-secondary">Ver Todos</a>
+        </form>
+    </section>
+
+    <!-- Mostrar estadísticas usando colecciones -->
+    <section class="stats-section">
+        <h3>Estadísticas</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <strong>Total Productos:</strong> {{ productos|length }}
+            </div>
+            <div class="stat-card">
+                <strong>Categorías Únicas (Set):</strong> {{ categorias|length }}
+            </div>
+            <div class="stat-card">
+                <strong>Categorías:</strong> 
+                {% if categorias %}
+                    {{ ', '.join(categorias) }}
+                {% else %}
+                    Ninguna
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Botón para añadir nuevo producto -->
+    <section class="actions-section">
+        <a href="{{ url_for('nuevo_producto') }}" class="btn-primary">Añadir Nuevo Producto</a>
+    </section>
+
+    <!-- Tabla de productos (Lista de Productos desde POO) -->
+    <section class="table-section">
+        <h2>Listado de Productos</h2>
+        {% if productos %}
+            <table class="productos-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Cantidad</th>
+                        <th>Precio</th>
+                        <th>Categoría</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto in productos %}
+                    <tr class="{{ 'agotado' if producto.cantidad == 0 else '' }}">
+                        <td>{{ producto.id }}</td>
+                        <td>{{ producto.nombre }}</td>
+                        <td>{{ producto.cantidad }}</td>
+                        <td>${{ "%.2f"|format(producto.precio) }}</td>
+                        <td>{{ producto.categoria }}</td>
+                        <td>
+                            <span class="estado {{ 'disponible' if producto.cantidad > 0 else 'agotado' }}">
+                                {{ producto.estado() }}
+                            </span>
+                        </td>
+                        <td class="acciones">
+                            <a href="{{ url_for('editar_producto', id_producto=producto.id) }}" class="btn-edit">Editar</a>
+                            <a href="{{ url_for('eliminar_producto', id_producto=producto.id) }}" 
+                               class="btn-delete"
+                               onclick="return confirm('¿Estás seguro de eliminar este producto?')">Eliminar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="no-productos">No hay productos en el inventario. 
+               <a href="{{ url_for('nuevo_producto') }}">Añade el primero</a>
+            </p>
+        {% endif %}
+    </section>
+</div>
+
+<style>
+    .productos-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .search-section, .stats-section, .actions-section, .table-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 8px;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .stat-card {
+        padding: 15px;
+        background: white;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .productos-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+    }
+
+    .productos-table th,
+    .productos-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .productos-table th {
+        background-color: #333;
+        color: white;
+    }
+
+    .productos-table tr:hover {
+        background-color: #f5f5f5;
+    }
+
+    .productos-table tr.agotado {
+        background-color: #ffe0e0;
+    }
+
+    .estado {
+        padding: 5px 10px;
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
+
+    .estado.disponible {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .estado.agotado {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .btn-primary, .btn-secondary, .btn-edit, .btn-delete {
+        display: inline-block;
+        padding: 8px 16px;
+        margin: 5px;
+        border-radius: 4px;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-edit {
+        background-color: #ffc107;
+        color: black;
+    }
+
+    .btn-delete {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .no-productos {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+</style>
+{% endblock %}
