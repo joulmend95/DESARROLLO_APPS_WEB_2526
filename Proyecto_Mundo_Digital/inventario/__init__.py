@@ -12,6 +12,11 @@ from .persistencia import (
     cargar_desde_archivo
 )
 
+from .pedidos import (
+    crear_pedido, obtener_pedidos, 
+    obtener_detalles_pedido, obtener_pedido_con_detalles
+)
+
 # SQLAlchemy imports
 from .models import (
     ProductoModel, HistorialModel, 
@@ -26,6 +31,8 @@ __all__ = [
     'guardar_txt', 'leer_txt', 'guardar_json', 'leer_json',
     'guardar_csv', 'leer_csv', 'sincronizar_todos_formatos',
     'leer_todos_formatos', 'cargar_desde_archivo',
+    # Pedidos
+    'crear_pedido', 'obtener_pedidos', 'obtener_detalles_pedido', 'obtener_pedido_con_detalles',
     # SQLAlchemy
     'ProductoModel', 'HistorialModel', 'init_sqlalchemy_db',
     'get_session', 'close_session', 'ProductoService', 'HistorialService'

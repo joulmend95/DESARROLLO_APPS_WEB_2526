@@ -1,11 +1,14 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Checkout - Mundo Digital{% endblock %}
 
 {% block content %}
     <h1>Proceso de Pago</h1>
-    <p>Por favor, completa tus datos para finalizar la compra.</p>
-    <form action="{{ url_for('confirmar_checkout') }}" method="GET">
-        <button type="submit">Confirmar Compra</button>
+    <p>Estás a punto de pagar un total de: <strong>${{ total }}</strong></p>
+    <p>Revisa tu compra y confirma para finalizar el pago usando la cuenta actual (<strong>{{ current_user.nombre }}</strong> - {{ current_user.email }}).</p>
+    <form action="{{ url_for('confirmar_checkout') }}" method="POST">
+        <button type="submit">Confirmar y Pagar</button>
     </form>
+    <br>
+    <a href="{{ url_for('carrito') }}">Volver al Carrito</a>
 {% endblock %}

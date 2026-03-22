@@ -1,29 +1,122 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, flash
+﻿from flask import Flask, render_template, request, redirect, url_for, send_file, flash, session
 import json
 import csv
 import os
 from inventario import (
-    init_db, Inventario,
-    leer_txt, leer_json, leer_csv,
-    guardar_txt, guardar_json, guardar_csv,
-    cargar_desde_archivo,
-    # SQLAlchemy
-    init_sqlalchemy_db, ProductoService, HistorialService
+    init_db, Inventario, crear_pedido, obtener_pedidos, obtener_pedido_con_detalles
 )
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from inventario.models import UsuarioModel
+from Conexion.conexion import get_db_connection
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'tu_clave_secreta_aqui_cambiar_en_produccion'
 
-# Inicializar Base de Datos SQLite básica e Inventario (POO)
+# Configuración Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = get_db_connection()
+    if conn:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM usuarios WHERE id_usuario = %s", (user_id,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        if user:
+            return UsuarioModel(user['id_usuario'], user['nombre'], user['email'], user['password'], user['rol'])
+    return None
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_fallback_key_dev_only')
+
+# Inicializar Base de Datos SQLite bÃ¡sica e Inventario (POO)
 init_db()
 sistema_inventario = Inventario(auto_sincronizar=True)
-
-# Inicializar Base de Datos SQLAlchemy
-init_sqlalchemy_db()
 
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+        
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
+            user = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            
+            if user and check_password_hash(user['password'], password):
+                usuario_obj = UsuarioModel(user['id_usuario'], user['nombre'], user['email'], user['password'], user['rol'])
+                login_user(usuario_obj)
+                flash('Sesión iniciada exitosamente.', 'success')
+                
+                next_page = request.args.get('next')
+                return redirect(next_page or url_for('home'))
+            else:
+                flash('Correo o contraseña incorrectos.', 'error')
+                
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+        
+    if request.method == 'POST':
+        nombre = request.form['nombre']
+        email = request.form['email']
+        password = request.form['password']
+        
+        hashed_password = generate_password_hash(password)
+        
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor(dictionary=True)
+            # Verificar si existe el email
+            cursor.execute("SELECT * FROM usuarios WHERE email = %s", (email,))
+            if cursor.fetchone():
+                flash('El correo ya está registrado.', 'error')
+            else:
+                try:
+                    cursor.execute(
+                        "INSERT INTO usuarios (nombre, email, password, rol) VALUES (%s, %s, %s, %s)",
+                        (nombre, email, hashed_password, 'cliente')
+                    )
+                    conn.commit()
+                    flash('Registro exitoso. Ahora puedes iniciar sesión.', 'success')
+                    
+                    next_page = request.args.get('next')
+                    return redirect(url_for('login', next=next_page) if next_page else url_for('login'))
+                except Exception as e:
+                    conn.rollback()
+                    flash(f'Error al registrar: {str(e)}', 'error')
+                finally:
+                    cursor.close()
+                    conn.close()
+                    
+    return render_template('register.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Has cerrado sesión.', 'success')
+    return redirect(url_for('home'))
 
 @app.route('/about')
 def about():
@@ -31,36 +124,149 @@ def about():
 
 @app.route('/catalogo')
 def catalogo():
-    lista_productos = ['Laptop Asus', 'Laptop Lenovo', 'Mouse Logitech', 'Auriculares Soundcore']
-    return render_template('catalogo.html', productos=lista_productos)
+    productos = sistema_inventario.mostrar_todos()
+    return render_template('catalogo.html', productos=productos)
 
 @app.route('/carrito')
 def carrito():
-    return render_template('carrito.html')
+    carrito_items = session.get('carrito', {})
+    total = sum(float(item['precio']) * int(item['cantidad']) for item in carrito_items.values())
+    return render_template('carrito.html', carrito=carrito_items, total=total)
 
-@app.route('/carrito/agregar/<producto>')
-def agregar_al_carrito(producto):
-    return f'Producto {producto} agregado al carrito'
+@app.route('/carrito/agregar/<int:id_producto>', methods=['POST'])
+def agregar_al_carrito(id_producto):
+    producto = sistema_inventario.obtener_por_id(id_producto)
+    if not producto:
+        flash("Producto no encontrado", "error")
+        return redirect(url_for('catalogo'))
+        
+    if 'carrito' not in session:
+        session['carrito'] = {}
+        
+    carrito = session['carrito']
+    id_str = str(id_producto)
+    
+    # Obtener atributos independientemente de si es objeto o dict
+    stock_disponible = getattr(producto, 'cantidad', None) 
+    if stock_disponible is None:
+        stock_disponible = producto.get('cantidad', 0)
+        
+    # Cantidad solicitada desde el formulario, o 1 por defecto
+    try:
+        cantidad_solicitada = int(request.form.get('cantidad', 1))
+    except ValueError:
+        cantidad_solicitada = 1
 
-@app.route('/carrito/eliminar/<producto>')
-def eliminar_del_carrito(producto):
-    return f'Producto {producto} eliminado del carrito'
+    if cantidad_solicitada <= 0:
+        flash("La cantidad debe ser mayor a 0.", "error")
+        return redirect(url_for('catalogo'))
+
+    cantidad_actual = carrito.get(id_str, {}).get('cantidad', 0)
+    nueva_cantidad = cantidad_actual + cantidad_solicitada
+    
+    if nueva_cantidad > stock_disponible:
+        flash(f"No hay suficiente stock. Stock disponible: {stock_disponible}", "error")
+        return redirect(url_for('catalogo'))
+    
+    if id_str in carrito:
+        carrito[id_str]['cantidad'] = nueva_cantidad
+    else:
+        nombre = getattr(producto, 'nombre', None) or producto['nombre']
+        precio = getattr(producto, 'precio', None) or producto['precio']
+        
+        carrito[id_str] = {
+            'id': id_producto,
+            'nombre': nombre,
+            'precio': precio,
+            'cantidad': nueva_cantidad
+        }
+        
+    session.modified = True
+    flash(f"Se agregaron {cantidad_solicitada} unidad(es) de {getattr(producto, 'nombre', None) or producto.get('nombre')} al carrito.", "success")
+    return redirect(url_for('catalogo'))
+
+@app.route('/carrito/eliminar/<int:id_producto>', methods=['POST'])
+def eliminar_del_carrito(id_producto):
+    carrito = session.get('carrito', {})
+    id_str = str(id_producto)
+    
+    if id_str in carrito:
+        del carrito[id_str]
+        session.modified = True
+        flash("Producto eliminado del carrito.", "success")
+        
+    return redirect(url_for('carrito'))
 
 @app.route('/checkout')
+@login_required
 def checkout():
-    return render_template('checkout.html')
+    carrito_items = session.get('carrito', {})
+    if not carrito_items:
+        flash("Tu carrito está vacío.", "warning")
+        return redirect(url_for('catalogo'))
+        
+    total = sum(float(item['precio']) * int(item['cantidad']) for item in carrito_items.values())
+    return render_template('checkout.html', carrito=carrito_items, total=total)
 
-@app.route('/checkout/confirmar')
+@app.route('/checkout/confirmar', methods=['POST'])
+@login_required
 def confirmar_checkout():
-    return render_template('confirmar_checkout.html')
+    carrito = session.get('carrito', {})
+    if not carrito:
+        flash("Tu carrito está vacío.", "error")
+        return redirect(url_for('catalogo'))
+
+    # Si está logueado, cogemos los datos del usuario actual
+    cliente_nombre = current_user.nombre
+    cliente_email = current_user.email
+    total = sum(float(item['precio']) * int(item['cantidad']) for item in carrito.values())
+
+    # Registrar el pedido en la BD y en los ficheros CSV/JSON/TXT
+    pedido_id = crear_pedido(cliente_nombre, cliente_email, total, carrito)
+
+    # Reducir el stock en el inventario
+    for id_str, item in carrito.items():
+        producto = sistema_inventario.obtener_por_id(item['id'])
+        if producto:
+            stock_actual = getattr(producto, 'cantidad', None)
+            if stock_actual is None:
+                stock_actual = producto.get('cantidad', 0)
+
+            nuevo_stock = max(0, stock_actual - item['cantidad'])
+
+            # Necesitamos todos los datos para actualizar
+            nombre = getattr(producto, 'nombre', None) or producto['nombre']
+            precio = getattr(producto, 'precio', None) or producto['precio']
+            categoria = getattr(producto, 'categoria', None) or producto.get('categoria', 'General')
+            sistema_inventario.actualizar_producto(item['id'], nombre, nuevo_stock, precio, categoria)
+
+    # Vaciar el carrito
+    session.pop('carrito', None)
+    session.modified = True
+
+    if pedido_id:
+        return redirect(url_for('ver_factura', pedido_id=pedido_id))
+    else:
+        return render_template('confirmar_checkout.html')
+
+@app.route('/pedidos')
+@login_required
+def lista_pedidos():
+    pedidos = obtener_pedidos()
+    return render_template('pedidos.html', pedidos=pedidos)
+
+@app.route('/factura/<int:pedido_id>')
+@login_required
+def ver_factura(pedido_id):
+    pedido, detalles = obtener_pedido_con_detalles(pedido_id)
+    if not pedido:
+        flash("Pedido no encontrado", "error")
+        return redirect(url_for('home'))
+    return render_template('factura.html', pedido=pedido, detalles=detalles)
 
 @app.route('/contacto')
 def contacto():
     return render_template('contacto.html')
-
-@app.route('/contactos')
-def contactos():
-    return render_template('contactos.html')
 
 # ================================
 # Rutas CRUD de Inventario (POO & SQLite)
@@ -68,9 +274,9 @@ def contactos():
 
 @app.route('/inventario')
 def listar_inventario():
-    # Colección (Lista) proveniente de la clase Inventario
+    # ColecciÃ³n (Lista) proveniente de la clase Inventario
     productos = sistema_inventario.mostrar_todos()
-    # Colección (Set)
+    # ColecciÃ³n (Set)
     categorias = sistema_inventario.categorias_unicas
     return render_template('inventario.html', productos=productos, categorias=categorias)
 
@@ -91,7 +297,7 @@ def agregar_inventario():
     precio = float(request.form['precio'])
     categoria = request.form.get('categoria', 'General')
     
-    # Añadir vía POO y SQLite
+    # AÃ±adir vÃ­a POO y SQLite
     sistema_inventario.añadir_producto(nombre, cantidad, precio, categoria)
     return redirect(url_for('listar_inventario'))
 
@@ -103,7 +309,7 @@ def editar_inventario(id_producto):
         precio = float(request.form['precio'])
         categoria = request.form.get('categoria', 'General')
         
-        # Sincronizar actualización
+        # Sincronizar actualizaciÃ³n
         sistema_inventario.actualizar_producto(id_producto, nombre, cantidad, precio, categoria)
         return redirect(url_for('listar_inventario'))
     else:
@@ -117,336 +323,10 @@ def eliminar_inventario(id_producto):
     sistema_inventario.eliminar_producto(id_producto)
     return redirect(url_for('listar_inventario'))
 
-# ================================
-# Rutas de Productos (alternativa a inventario)
-# ================================
-
-@app.route('/productos')
-def listar_productos():
-    productos = sistema_inventario.mostrar_todos()
-    categorias = sistema_inventario.categorias_unicas
-    return render_template('productos.html', productos=productos, categorias=categorias)
-
-@app.route('/productos/buscar', methods=['GET'])
-def buscar_productos():
-    termino = request.args.get('busqueda', '')
-    if termino:
-        productos = sistema_inventario.buscar_por_nombre(termino)
-    else:
-        productos = sistema_inventario.mostrar_todos()
-    categorias = sistema_inventario.categorias_unicas
-    return render_template('productos.html', productos=productos, categorias=categorias, busqueda=termino)
-
-@app.route('/productos/nuevo', methods=['GET', 'POST'])
-def nuevo_producto():
-    if request.method == 'POST':
-        nombre = request.form['nombre']
-        cantidad = int(request.form['cantidad'])
-        precio = float(request.form['precio'])
-        categoria = request.form.get('categoria', 'General')
-        sistema_inventario.añadir_producto(nombre, cantidad, precio, categoria)
-        return redirect(url_for('listar_productos'))
-    return render_template('producto_form.html')
-
-@app.route('/productos/editar/<int:id_producto>', methods=['GET', 'POST'])
-def editar_producto(id_producto):
-    if request.method == 'POST':
-        nombre = request.form['nombre']
-        cantidad = int(request.form['cantidad'])
-        precio = float(request.form['precio'])
-        categoria = request.form.get('categoria', 'General')
-        sistema_inventario.actualizar_producto(id_producto, nombre, cantidad, precio, categoria)
-        return redirect(url_for('listar_productos'))
-    else:
-        producto = sistema_inventario.obtener_por_id(id_producto)
-        return render_template('producto_form.html', producto=producto)
-
-@app.route('/productos/eliminar/<int:id_producto>')
-def eliminar_producto(id_producto):
-    sistema_inventario.eliminar_producto(id_producto)
-    return redirect(url_for('listar_productos'))
-
-# ================================
-# Rutas de Persistencia de Datos (Semana 12)
-# ================================
-
-@app.route('/datos')
-def ver_datos():
-    """
-    Muestra los datos almacenados en los archivos TXT, JSON y CSV
-    Utiliza las funciones de persistencia del módulo inventario
-    """
-    # Leer datos TXT usando la función open() en modo lectura
-    datos_txt_lista = leer_txt()
-    datos_txt = None
-    txt_path = os.path.join('inventario', 'data', 'datos.txt')
-    if os.path.exists(txt_path):
-        with open(txt_path, 'r', encoding='utf-8') as f:
-            datos_txt = f.read()
-    
-    # Leer datos JSON usando la librería json
-    datos_json = leer_json()
-    
-    # Leer datos CSV usando la librería csv
-    datos_csv_lista = leer_csv()
-    
-    # Convertir CSV a formato de tabla para la plantilla
-    datos_csv = None
-    if datos_csv_lista:
-        # Crear encabezados y filas
-        datos_csv = [
-            ['id', 'nombre', 'cantidad', 'precio', 'categoria', 'estado']
-        ]
-        for producto in datos_csv_lista:
-            datos_csv.append([
-                producto['id'],
-                producto['nombre'],
-                producto['cantidad'],
-                producto['precio'],
-                producto['categoria'],
-                producto.get('estado', 'Desconocido')
-            ])
-    
-    return render_template('datos.html', 
-                         datos_txt=datos_txt, 
-                         datos_json={'productos': datos_json} if datos_json else None, 
-                         datos_csv=datos_csv)
-
-
-@app.route('/datos/formato/<formato>')
-def ver_formato(formato):
-    """
-    Muestra los datos de un formato específico
-    """
-    if formato == 'txt':
-        productos = leer_txt()
-        return render_template('formato_txt.html', productos=productos)
-    elif formato == 'json':
-        productos = leer_json()
-        return render_template('formato_json.html', productos=productos)
-    elif formato == 'csv':
-        productos = leer_csv()
-        return render_template('formato_csv.html', productos=productos)
-    else:
-        flash('Formato no válido', 'error')
-        return redirect(url_for('ver_datos'))
-
-
-@app.route('/datos/importar/<formato>')
-def importar_datos(formato):
-    """
-    Importa datos desde un archivo específico (TXT, JSON o CSV) a la base de datos
-    """
-    if formato not in ['txt', 'json', 'csv']:
-        flash('Formato no soportado', 'error')
-        return redirect(url_for('ver_datos'))
-    
-    exito, mensaje = cargar_desde_archivo(sistema_inventario, formato)
-    
-    if exito:
-        flash(mensaje, 'success')
-    else:
-        flash(mensaje, 'error')
-    
-    return redirect(url_for('listar_productos'))
-
-
-@app.route('/datos/sincronizar')
-def sincronizar_datos():
-    """
-    Sincroniza los datos actuales de la base de datos con todos los archivos
-    """
-    productos = sistema_inventario.mostrar_todos()
-    
-    # Usar las funciones de persistencia
-    exito_txt, msg_txt = guardar_txt(productos)
-    exito_json, msg_json = guardar_json(productos)
-    exito_csv, msg_csv = guardar_csv(productos)
-    
-    if exito_txt and exito_json and exito_csv:
-        flash('Datos sincronizados correctamente en todos los formatos', 'success')
-    else:
-        flash('Hubo problemas al sincronizar algunos formatos', 'warning')
-    
-    return redirect(url_for('ver_datos'))
-
-@app.route('/datos/exportar/<formato>')
-def exportar_datos(formato):
-    """
-    Exporta los datos del inventario actual a TXT, JSON o CSV
-    Utiliza las funciones de persistencia del módulo
-    """
-    productos = sistema_inventario.mostrar_todos()
-    
-    if formato == 'txt':
-        # Exportar a TXT usando la función guardar_txt
-        guardar_txt(productos)
-        txt_path = os.path.join('inventario', 'data', 'datos.txt')
-        return send_file(txt_path, as_attachment=True, download_name='inventario.txt')
-    
-    elif formato == 'json':
-        # Exportar a JSON usando la función guardar_json
-        guardar_json(productos)
-        json_path = os.path.join('inventario', 'data', 'datos.json')
-        return send_file(json_path, as_attachment=True, download_name='inventario.json')
-    
-    elif formato == 'csv':
-        # Exportar a CSV usando la función guardar_csv
-        guardar_csv(productos)
-        csv_path = os.path.join('inventario', 'data', 'datos.csv')
-        return send_file(csv_path, as_attachment=True, download_name='inventario.csv')
-    
-    return redirect(url_for('ver_datos'))
-
-
-# ================================
-# Rutas de SQLAlchemy (Semana 12)
-# ================================
-
-@app.route('/sqlalchemy')
-def sqlalchemy_home():
-    """
-    Página principal de SQLAlchemy mostrando productos
-    """
-    productos = ProductoService.obtener_todos_productos()
-    estadisticas = ProductoService.obtener_estadisticas()
-    return render_template('sqlalchemy_home.html', 
-                         productos=productos, 
-                         estadisticas=estadisticas)
-
-
-@app.route('/sqlalchemy/crear', methods=['GET', 'POST'])
-def sqlalchemy_crear():
-    """
-    Crear un nuevo producto usando SQLAlchemy
-    """
-    if request.method == 'POST':
-        nombre = request.form.get('nombre')
-        cantidad = int(request.form.get('cantidad', 0))
-        precio = float(request.form.get('precio', 0.0))
-        categoria = request.form.get('categoria')
-        descripcion = request.form.get('descripcion', '')
-        
-        exito, resultado = ProductoService.crear_producto(
-            nombre, cantidad, precio, categoria, descripcion
-        )
-        
-        if exito:
-            flash(f'Producto "{nombre}" creado exitosamente con SQLAlchemy', 'success')
-            return redirect(url_for('sqlalchemy_home'))
-        else:
-            flash(f'Error al crear producto: {resultado}', 'error')
-    
-    return render_template('sqlalchemy_form.html', accion='crear')
-
-
-@app.route('/sqlalchemy/editar/<int:producto_id>', methods=['GET', 'POST'])
-def sqlalchemy_editar(producto_id):
-    """
-    Editar un producto existente usando SQLAlchemy
-    """
-    if request.method == 'POST':
-        datos = {
-            'nombre': request.form.get('nombre'),
-            'cantidad': int(request.form.get('cantidad', 0)),
-            'precio': float(request.form.get('precio', 0.0)),
-            'categoria': request.form.get('categoria'),
-            'descripcion': request.form.get('descripcion')
-        }
-        
-        exito, resultado = ProductoService.actualizar_producto(producto_id, **datos)
-        
-        if exito:
-            flash(f'Producto actualizado exitosamente con SQLAlchemy', 'success')
-            return redirect(url_for('sqlalchemy_home'))
-        else:
-            flash(f'Error al actualizar: {resultado}', 'error')
-    
-    # GET - Mostrar formulario con datos actuales
-    producto = ProductoService.obtener_producto(producto_id)
-    if not producto:
-        flash('Producto no encontrado', 'error')
-        return redirect(url_for('sqlalchemy_home'))
-    
-    return render_template('sqlalchemy_form.html', 
-                         accion='editar', 
-                         producto=producto)
-
-
-@app.route('/sqlalchemy/eliminar/<int:producto_id>')
-def sqlalchemy_eliminar(producto_id):
-    """
-    Eliminar un producto usando SQLAlchemy
-    """
-    exito, mensaje = ProductoService.eliminar_producto(producto_id)
-    
-    if exito:
-        flash(mensaje, 'success')
-    else:
-        flash(f'Error: {mensaje}', 'error')
-    
-    return redirect(url_for('sqlalchemy_home'))
-
-
-@app.route('/sqlalchemy/buscar')
-def sqlalchemy_buscar():
-    """
-    Buscar productos usando SQLAlchemy
-    """
-    termino = request.args.get('q', '')
-    estadisticas = ProductoService.obtener_estadisticas()
-    
-    if termino:
-        productos = ProductoService.buscar_productos(termino)
-        flash(f'Se encontraron {len(productos)} productos con "{termino}"', 'info')
-    else:
-        productos = ProductoService.obtener_todos_productos()
-    
-    return render_template('sqlalchemy_home.html', 
-                         productos=productos,
-                         estadisticas=estadisticas,
-                         termino_busqueda=termino)
-
-
-@app.route('/sqlalchemy/detalle/<int:producto_id>')
-def sqlalchemy_detalle(producto_id):
-    """
-    Ver detalle de un producto con su historial usando SQLAlchemy
-    """
-    producto = ProductoService.obtener_producto(producto_id)
-    
-    if not producto:
-        flash('Producto no encontrado', 'error')
-        return redirect(url_for('sqlalchemy_home'))
-    
-    # Obtener historial del producto
-    historial = HistorialService.obtener_historial_producto(producto_id)
-    
-    return render_template('sqlalchemy_detalle.html', 
-                         producto=producto,
-                         historial=historial)
-
-
-@app.route('/sqlalchemy/historial')
-def sqlalchemy_historial():
-    """
-    Ver el historial completo de cambios
-    """
-    historial = HistorialService.obtener_historial(limite=100)
-    estadisticas = HistorialService.obtener_estadisticas_historial()
-    return render_template('sqlalchemy_historial.html', 
-                         historial=historial,
-                         estadisticas=estadisticas)
-
-
-@app.route('/sqlalchemy/estadisticas')
-def sqlalchemy_estadisticas():
-    """
-    Ver estadísticas detalladas usando SQLAlchemy
-    """
-    estadisticas = ProductoService.obtener_estadisticas()
-    return render_template('sqlalchemy_estadisticas.html',
-                         estadisticas=estadisticas)
-
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+
+

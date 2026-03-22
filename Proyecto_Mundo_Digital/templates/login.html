@@ -1,0 +1,17 @@
+﻿{% extends "base.html" %}
+{% block title %}Iniciar Sesión - Mundo Digital{% endblock %}
+{% block content %}
+    <h1>Iniciar Sesión</h1>
+    <form action="" method="POST" style="max-width: 300px;">
+        <div style="margin-bottom: 10px;">
+            <label for="email">Correo electrónico:</label>
+            <input type="text" id="email" name="email" required style="width: 100%;">
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label for="password">Contraseña:</label>
+            <input type="password" id="password" name="password" required style="width: 100%;">
+        </div>
+        <button type="submit">Entrar</button>
+    </form>
+    <p>¿No tienes cuenta? <a href="{{ url_for('register', next=request.args.get('next', '')) }}">Regístrate aquí</a>.</p>
+{% endblock %}

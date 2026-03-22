@@ -1,5 +1,5 @@
 # Inventario de Productos - Formato TXT
 # Formato: ID|Nombre|Cantidad|Precio|Categoria
 #============================================================
-1|Mouse_Logitec|5|22.5|General
-2|Teclado_Logitec|8|26.75|General
+1|Mouse_Logitec 502|0|96.50|Periféricos
+2|laptop lenovo |8|700.00|Laptops

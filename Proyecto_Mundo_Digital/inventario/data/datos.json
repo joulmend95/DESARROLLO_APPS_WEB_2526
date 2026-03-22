@@ -7,19 +7,6 @@
     "productos": [
         {
             "id": 1,
-            "nombre": "Mouse_Logitec",
-            "cantidad": 5,
-            "precio": 22.5,
-            "categoria": "General",
-            "estado": "Disponible"
-        },
-        {
-            "id": 2,
-            "nombre": "Teclado_Logitec",
-            "cantidad": 8,
-            "precio": 26.75,
-            "categoria": "General",
-            "estado": "Disponible"
-        }
-    ]
-}
+            "nombre": "Mouse_Logitec 502",
+            "cantidad": 0,
+            "precio": 

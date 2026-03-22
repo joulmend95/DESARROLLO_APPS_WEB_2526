@@ -1,4 +1,4 @@
-"""
+﻿"""
 Modelos de Base de Datos usando SQLAlchemy ORM
 Define las tablas y relaciones de la base de datos
 """
@@ -11,11 +11,20 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 # Crear la base declarativa
 Base = declarative_base()
 
-# Configuración de la base de datos
-DATABASE_URL = 'sqlite:///inventario.db'
-engine = create_engine(DATABASE_URL, echo=False, connect_args={'check_same_thread': False})
+# ConfiguraciÃ³n de la base de datos
+import os
+from dotenv import load_dotenv
 
-# Crear una sesión con scope
+load_dotenv()
+DB_USER = os.getenv('DB_USER', 'mundo_app_user')
+DB_PASS = os.getenv('DB_PASSWORD', '123456')
+DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
+DB_NAME = os.getenv('DB_NAME', 'mundo_digital_db')
+
+DATABASE_URL = f"mysql+mysqlconnector://{DB_USER}:{DB_PASS}@{DB_HOST}/{DB_NAME}"
+engine = create_engine(DATABASE_URL, echo=False)
+
+# Crear una sesiÃ³n con scope
 SessionLocal = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
 
@@ -26,7 +35,7 @@ class ProductoModel(Base):
     """
     __tablename__ = 'productos_sqlalchemy'
     
-    # Definición de columnas
+    # DefiniciÃ³n de columnas
     id = Column(Integer, primary_key=True, autoincrement=True)
     nombre = Column(String(100), nullable=False, index=True)
     cantidad = Column(Integer, nullable=False, default=0)
@@ -37,12 +46,12 @@ class ProductoModel(Base):
     fecha_actualizacion = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     def __repr__(self):
-        """Representación en string del objeto"""
+        """RepresentaciÃ³n en string del objeto"""
         return f"<ProductoModel(id={self.id}, nombre='{self.nombre}', cantidad={self.cantidad}, precio={self.precio})>"
     
     def to_dict(self):
         """
-        Convierte el modelo a un diccionario para fácil serialización
+        Convierte el modelo a un diccionario para fÃ¡cil serializaciÃ³n
         """
         return {
             'id': self.id,
@@ -70,7 +79,7 @@ class ProductoModel(Base):
 class HistorialModel(Base):
     """
     Modelo SQLAlchemy para registrar el historial de cambios
-    Útil para auditoría y seguimiento de modificaciones
+    Ãštil para auditorÃ­a y seguimiento de modificaciones
     """
     __tablename__ = 'historial'
     
@@ -101,24 +110,36 @@ def init_sqlalchemy_db():
     Inicializa la base de datos creando todas las tablas definidas
     """
     Base.metadata.create_all(bind=engine)
-    print("✓ Base de datos SQLAlchemy inicializada correctamente")
+    print("âœ“ Base de datos SQLAlchemy inicializada correctamente")
 
 
 def get_session():
     """
-    Retorna una sesión de base de datos
-    Usar en un contexto 'with' para manejo automático
+    Retorna una sesiÃ³n de base de datos
+    Usar en un contexto 'with' para manejo automÃ¡tico
     """
     return SessionLocal()
 
 
 def close_session():
     """
-    Cierra la sesión actual
+    Cierra la sesiÃ³n actual
     """
     SessionLocal.remove()
 
 
-# Inicializar las tablas al importar el módulo
+# Inicializar las tablas al importar el mÃ³dulo
 if __name__ != '__main__':
     init_sqlalchemy_db()
+
+
+from flask_login import UserMixin
+
+class UsuarioModel(UserMixin):
+    def __init__(self, id_usuario, nombre, email, password, rol):
+        self.id = str(id_usuario) # Flask-Login requiere string
+        self.nombre = nombre
+        self.email = email
+        self.password = password
+        self.rol = rol
+

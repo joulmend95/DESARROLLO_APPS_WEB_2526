@@ -1,0 +1,16 @@
+[
+    {
+        "id": 2,
+        "cliente_nombre": "Jorge",
+        "cliente_email": "jorgemendosa78@gmail.com",
+        "fecha": "2026-03-22 14:49:49",
+        "total": 796.5
+    },
+    {
+        "id": 1,
+        "cliente_nombre": "jorge  mendosa",
+        "cliente_email": "jorgemendosa78@gmail.com",
+        "fecha": "2026-03-22 14:17:06",
+        "total": 893.0
+    }
+]

@@ -7,7 +7,27 @@
     <p>Explora nuestra selección de productos tecnológicos:</p>
     <ul>
         {% for producto in productos %}
-            <li>{{ producto }}</li>
+            <li>
+                {{ producto.nombre }} - ${{ producto.precio }} (Stock: {{ producto.cantidad }})
+                {% set prod_id = producto.id | default(producto['id']) %}
+                {% set prod_id_str = prod_id | string %}
+                {% set cantidad_en_carrito = session.get('carrito', {}).get(prod_id_str, {}).get('cantidad', 0) %}
+                
+                {% if cantidad_en_carrito > 0 %}
+                    <strong>[En carrito: {{ cantidad_en_carrito }}]</strong>
+                {% endif %}
+                
+                {% set max_posible = producto.cantidad - cantidad_en_carrito %}
+                
+                {% if max_posible > 0 %}
+                    <form action="{{ url_for('agregar_al_carrito', id_producto=prod_id) }}" method="POST" style="display:inline;">
+                        <input type="number" name="cantidad" value="1" min="1" max="{{ max_posible }}" style="width: 50px;">
+                        <button type="submit">Añadir al carrito</button>
+                    </form>
+                {% else %}
+                    <strong>[{% if producto.cantidad == 0 %}Agotado{% else %}Máximo en carrito{% endif %}]</strong>
+                {% endif %}
+            </li>
         {% else %}
             <li>No hay productos disponibles en este momento.</li>
         {% endfor %}
