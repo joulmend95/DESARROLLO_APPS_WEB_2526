@@ -3,7 +3,18 @@
 {% block title %}Compra Confirmada - Mundo Digital{% endblock %}
 
 {% block content %}
-    <h1>¡Gracias por tu compra!</h1>
-    <p>Tu pedido ha sido confirmado y está en proceso.</p>
-    <a href="{{ url_for('home') }}">Volver al Inicio</a>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 text-center">
+        <div class="card border-0 shadow">
+            <div class="card-body p-5">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                <h1 class="mt-3 text-success">¡Gracias por tu compra!</h1>
+                <p class="lead mt-3 text-muted">Tu pedido ha sido confirmado y está en proceso de envío.</p>
+                <div class="mt-4">
+                    <a href="{{ url_for('home') }}" class="btn btn-primary btn-lg px-4">Volver al Inicio</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

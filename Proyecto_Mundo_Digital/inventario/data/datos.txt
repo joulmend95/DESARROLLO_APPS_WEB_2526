@@ -1,5 +1,6 @@
 # Inventario de Productos - Formato TXT
 # Formato: ID|Nombre|Cantidad|Precio|Categoria
 #============================================================
-1|Mouse_Logitec 502|0|96.50|Periféricos
+1|Mouse Logitec 502 Hero|3|96.50|Periféricos
 2|laptop lenovo |8|700.00|Laptops
+3|Teclado Royal Kage|1|45.00|Periféricos

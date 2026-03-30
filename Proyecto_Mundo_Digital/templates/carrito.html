@@ -1,50 +1,87 @@
 {% extends "base.html" %}
 
-{% block title %}Carrito - Mundo Digital{% endblock %}
+{% block title %}Carrito de Compras - Mundo Digital{% endblock %}
 
 {% block content %}
-    <h1>Tu Carrito de Compras</h1>
-    
-    {% if carrito %}
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Precio Unitario</th>
-                    <th>Cantidad</th>
-                    <th>Subtotal</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for id_str, item in carrito.items() %}
-                <tr>
-                    <td>{{ item.nombre }}</td>
-                    <td>${{ item.precio }}</td>
-                    <td>{{ item.cantidad }}</td>
-                    <td>${{ item.precio * item.cantidad }}</td>
-                    <td>
-                        <form action="{{ url_for('eliminar_del_carrito', id_producto=item.id) }}" method="POST" style="display:inline;">
-                            <button type="submit">Eliminar</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="3" align="right"><strong>Total:</strong></td>
-                    <td><strong>${{ total }}</strong></td>
-                    <td></td>
-                </tr>
-            </tfoot>
-        </table>
-        <br>
-        <a href="{{ url_for('checkout') }}">Proceder al Pago</a>
-        <a href="{{ url_for('catalogo') }}">Seguir Comprando</a>
-    {% else %}
-        <p>Tu carrito está vacío.</p>
-        <a href="{{ url_for('catalogo') }}">Volver al Catálogo</a>
-    {% endif %}
-
+<div class="container-fluid mt-3 px-4">
+    <div class="row">
+        <!-- Columna de Productos (Izquierda) -->
+        <div class="col-lg-9 mb-4">
+            <div class="card p-4 border-0 shadow-sm cart-card">
+                <h2 class="mb-0 fw-normal">Carrito de compras</h2>
+                <a href="{{ url_for('catalogo') }}" class="text-amz-link text-decoration-none small">Desmarcar todos los artículos</a>
+                <p class="text-end text-muted small mb-1 border-bottom pb-1">Precio</p>
+                
+                {% if carrito %}
+                    {% for id_str, item in carrito.items() %}
+                    <div class="row py-3 border-bottom align-items-center">
+                        <div class="col-3 col-md-2 text-center">
+                            <i class="bi bi-laptop text-secondary" style="font-size: 4rem;"></i>
+                        </div>
+                        <div class="col-6 col-md-8">
+                            <h5 class="mb-1 text-truncate">{{ item.nombre }}</h5>
+                            <p class="text-success small fw-bold mb-1">En Stock</p>
+                            <p class="text-muted small mb-2">Vendido por: Mundo Digital</p>
+                            
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="bg-light px-2 py-1 border rounded shadow-sm fs-6">
+                                    Cant: <strong>{{ item.cantidad }}</strong>
+                                </span>
+                                <div class="border-start ms-2 ps-3">
+                                    <form action="{{ url_for('eliminar_del_carrito', id_producto=item.id) }}" method="POST" class="m-0">
+                                        <button type="submit" class="btn btn-link text-amz-link p-0 text-decoration-none shadow-none small">Eliminar</button>
+                                    </form>
+                                </div>
+                                <div class="border-start ms-2 ps-3">
+                                    <a href="#" class="text-amz-link p-0 text-decoration-none small">Guardar para más tarde</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3 col-md-2 text-end">
+                            <h4 class="fw-bold m-0 lh-1">${{ "%.2f"|format(item.precio|float * item.cantidad|int) }}</h4>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div class="text-end pt-3">
+                        <h5 class="fw-normal">Subtotal ({{ carrito|length }} productos): <strong class="fw-bold">${{ "%.2f"|format(total) }}</strong></h5>
+                    </div>
+                {% else %}
+                    <div class="py-5 text-center">
+                        <h4 class="mb-3">Tu carrito de Mundo Digital está vacío.</h4>
+                        <a href="{{ url_for('catalogo') }}" class="text-amz-link">Compra las ofertas del día</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Columna de Resumen (Derecha) -->
+        <div class="col-lg-3">
+            {% if carrito %}
+            <div class="card p-3 border-0 shadow-sm cart-card bg-white text-center">
+                <div class="d-flex justify-content-center align-items-center gap-1 mb-2 text-success">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span class="small">Tu pedido califica para envío GRATIS.</span>
+                </div>
+                
+                <h5 class="fw-normal mb-3">Subtotal ({{ carrito|length }} productos): <br><strong class="fw-bold fs-4">${{ "%.2f"|format(total) }}</strong></h5>
+                
+                <form action="{{ url_for('checkout') }}" method="GET">
+                    <button type="submit" class="btn btn-amz-yellow w-100 rounded-pill py-2 shadow-sm">Proceder al pago</button>
+                </form>
+            </div>
+            {% endif %}
+            
+            <div class="card p-3 mt-3 border-0 shadow-sm cart-card bg-white mt-4">
+                <h6 class="fw-bold fs-6">Recomendaciones para ti</h6>
+                <div class="d-flex align-items-center mb-2 mt-2">
+                     <i class="bi bi-headphones fs-3 me-2"></i>
+                     <div>
+                         <a href="{{ url_for('catalogo') }}" class="text-amz-link small text-decoration-none">Auriculares Bluetooth Pro</a>
+                         <div class="text-danger small">$45.00</div>
+                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

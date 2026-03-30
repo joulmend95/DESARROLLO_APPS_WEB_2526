@@ -3,12 +3,83 @@
 {% block title %}Checkout - Mundo Digital{% endblock %}
 
 {% block content %}
-    <h1>Proceso de Pago</h1>
-    <p>Estás a punto de pagar un total de: <strong>${{ total }}</strong></p>
-    <p>Revisa tu compra y confirma para finalizar el pago usando la cuenta actual (<strong>{{ current_user.nombre }}</strong> - {{ current_user.email }}).</p>
-    <form action="{{ url_for('confirmar_checkout') }}" method="POST">
-        <button type="submit">Confirmar y Pagar</button>
-    </form>
-    <br>
-    <a href="{{ url_for('carrito') }}">Volver al Carrito</a>
-{% endblock %}
+<div class="container mt-4 mb-5" style="max-width: 900px;">
+    <h3 class="mb-4 fw-normal">Selecciona un método de pago</h3>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card p-4 border rounded mb-3">
+                <div class="d-flex align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold">1</h5>
+                    <div class="ms-3 flex-grow-1">
+                        <h5 class="mb-0 fw-bold">Dirección de envío</h5>
+                        <p class="mb-0 small text-muted">{{ current_user.nombre }} ({{ current_user.email }})</p>
+                    </div>
+                    <a href="#" class="text-amz-link small text-decoration-none">Cambiar</a>
+                </div>
+            </div>
+
+            <div class="card p-4 border rounded mb-3 border-warning" style="background-color: #fcf4e4;">
+                <div class="d-flex align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold text-danger">2</h5>
+                    <div class="ms-3 flex-grow-1">
+                        <h5 class="mb-0 fw-bold text-danger">Método de pago</h5>
+                    </div>
+                </div>
+                
+                <div class="ms-4 ps-3 border-start">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="pago" id="pagoTarjeta" checked>
+                        <label class="form-check-label fw-bold small" for="pagoTarjeta">
+                            Tarjeta de crédito o débito Mundo Digital
+                            <br><span class="text-muted fw-normal">Visa terminada en 1234</span>
+                        </label>
+                    </div>
+                    
+                    <form action="{{ url_for('confirmar_checkout') }}" method="POST">
+                        <button type="submit" class="btn btn-amz-yellow mt-3 shadow-sm rounded-pill px-4 btn-sm fw-bold">Usar este método de pago</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card p-4 border rounded text-muted">
+                <div class="d-flex align-items-center">
+                    <h5 class="mb-0 fw-bold">3</h5>
+                    <div class="ms-3 flex-grow-1">
+                        <h5 class="mb-0 fw-bold">Revisar artículos y envío</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border rounded bg-light p-3 sticky-top" style="top: 20px;">
+                <form action="{{ url_for('confirmar_checkout') }}" method="POST">
+                    <button type="submit" class="btn btn-amz-yellow w-100 rounded-pill py-2 shadow-sm mb-3 text-center small">Usar este método de pago</button>
+                </form>
+                <p class="text-center small text-muted mb-3" style="font-size: 0.75rem;">Al realizar tu pedido, aceptas las Condiciones de uso y el Aviso de privacidad de Mundo Digital.</p>
+                
+                <h6 class="fw-bold fs-6 border-bottom pb-2">Resumen del pedido</h6>
+                <div class="d-flex justify-content-between mb-1 small text-muted">
+                    <span>Productos ({{ carrito|length }}):</span>
+                    <span>${{ "%.2f"|format(total) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1 small text-muted">
+                    <span>Envío:</span>
+                    <span>$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2 small text-muted">
+                    <span>Total antes de impuestos:</span>
+                    <span>${{ "%.2f"|format(total) }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 small text-muted border-bottom pb-2">
+                    <span>Impuestos estimados:</span>
+                    <span>$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between mb-0 align-items-center">
+                    <span class="fs-5 text-danger fw-bold">Total del pedido:</span>
+                    <span class="fs-5 text-danger fw-bold">${{ "%.2f"|format(total) }}</span>
+                </div>
+            </div>
+            <div class="card border rounded bg-light p-3 mt-3">
+                <p class="small text-muted mb-0"><i class="bi bi-info-circle text-primary"></i> Tienes envío <strong>GRATIS</strong> en esta orden.</p>

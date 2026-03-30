@@ -3,44 +3,65 @@
 {% block title %}Factura #{{ pedido.id }} - Mundo Digital{% endblock %}
 
 {% block content %}
-    <div style="border: 1px solid #ccc; padding: 20px; max-width: 600px; margin: auto;">
-        <h2>Factura de Compra</h2>
-        <p><strong>Pedido ID:</strong> #{{ pedido.id }}</p>
-        <p><strong>Fecha:</strong> {{ pedido.fecha }}</p>
-        <hr>
-        <p><strong>Cliente:</strong> {{ pedido.cliente_nombre }}</p>
-        <p><strong>Email:</strong> {{ pedido.cliente_email }}</p>
-        <hr>
-        <h3>Detalles de la compra</h3>
-        <table border="1" style="width:100%; border-collapse: collapse; text-align: left;">
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Precio Unitario</th>
-                    <th>Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for d in detalles %}
-                <tr>
-                    <td>{{ d.nombre }}</td>
-                    <td>{{ d.cantidad }}</td>
-                    <td>${{ d.precio_unitario }}</td>
-                    <td>${{ d.cantidad * d.precio_unitario }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="3" style="text-align: right;">Total Pagado:</th>
-                    <th>${{ pedido.total }}</th>
-                </tr>
-            </tfoot>
-        </table>
-        
-        <br>
-        <button onclick="window.print()">Imprimir Factura</button>
-        <a href="{{ url_for('lista_pedidos') }}">Volver a Mis Pedidos</a>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Factura de Compra</h3>
+                    <span class="badge bg-success">Pagado</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-sm-6">
+                            <h6 class="text-muted">Detalles del Pedido:</h6>
+                            <p class="mb-1"><strong>ID:</strong> #{{ pedido.id }}</p>
+                            <p class="mb-1"><strong>Fecha:</strong> {{ pedido.fecha }}</p>
+                        </div>
+                        <div class="col-sm-6 text-sm-end">
+                            <h6 class="text-muted">Facturado a:</h6>
+                            <p class="mb-1"><strong>{{ pedido.cliente_nombre }}</strong></p>
+                            <p class="mb-1">{{ pedido.cliente_email }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive-sm">
+                        <table class="table table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Cantidad</th>
+                                    <th class="text-end">P. Unitario</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for d in detalles %}
+                                <tr>
+                                    <td>{{ d.nombre }}</td>
+                                    <td class="text-center">{{ d.cantidad }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(d.precio_unitario) }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(d.cantidad * d.precio_unitario) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="3" class="text-end fs-5">Total Pagado:</th>
+                                    <th class="text-end fs-5 text-primary">${{ "%.2f"|format(pedido.total) }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-light p-3 d-flex justify-content-between">
+                    <a href="{{ url_for('lista_pedidos') }}" class="btn btn-outline-secondary">Volver a Mis Pedidos</a>
+                    <button onclick="window.print()" class="btn btn-primary d-print-none">
+                        <i class="bi bi-printer"></i> Imprimir Factura
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
 {% endblock %}

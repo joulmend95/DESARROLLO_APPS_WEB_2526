@@ -2,6 +2,8 @@
 import json
 import csv
 import os
+from fpdf import FPDF
+from io import BytesIO
 from inventario import (
     init_db, Inventario, crear_pedido, obtener_pedidos, obtener_pedido_con_detalles
 )
@@ -39,13 +41,32 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_fallback_key_dev_onl
 init_db()
 sistema_inventario = Inventario(auto_sincronizar=True)
 
+@app.before_request
+def restrict_admin_access():
+    # Permitir acceso siempre a archivos estáticos
+    if request.endpoint and request.endpoint.startswith('static'):
+        return
+
+    if current_user.is_authenticated and current_user.rol == 'admin':
+        # Lista de endpoints permitidos para el admin
+        admin_endpoints = [
+            'listar_inventario', 'buscar_inventario', 'agregar_inventario',
+            'editar_inventario', 'eliminar_inventario', 'exportar_pdf', 'logout'
+        ]
+        if request.endpoint and request.endpoint not in admin_endpoints:
+            return redirect(url_for('listar_inventario'))
+
 @app.route('/')
 def home():
+    if current_user.is_authenticated and current_user.rol == 'admin':
+        return redirect(url_for('listar_inventario'))
     return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        if current_user.rol == 'admin':
+            return redirect(url_for('listar_inventario'))
         return redirect(url_for('home'))
         
     if request.method == 'POST':
@@ -66,7 +87,12 @@ def login():
                 flash('Sesión iniciada exitosamente.', 'success')
                 
                 next_page = request.args.get('next')
-                return redirect(next_page or url_for('home'))
+                if not next_page:
+                    if usuario_obj.rol == 'admin':
+                        return redirect(url_for('listar_inventario'))
+                    else:
+                        return redirect(url_for('home'))
+                return redirect(next_page)
             else:
                 flash('Correo o contraseña incorrectos.', 'error')
                 
@@ -322,6 +348,51 @@ def editar_inventario(id_producto):
 def eliminar_inventario(id_producto):
     sistema_inventario.eliminar_producto(id_producto)
     return redirect(url_for('listar_inventario'))
+
+@app.route('/inventario/reporte_pdf')
+def exportar_pdf():
+    # Obtener el listado de productos
+    productos = sistema_inventario.mostrar_todos()
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    # Título
+    pdf.cell(200, 10, txt="Reporte de Inventario", ln=True, align='C')
+    pdf.ln(10)
+
+    # Encabezados de tabla
+    pdf.set_font("Arial", 'B', 10)
+    pdf.cell(10, 10, 'ID', 1, 0, 'C')
+    pdf.cell(70, 10, 'Nombre', 1, 0, 'C')
+    pdf.cell(25, 10, 'Cantidad', 1, 0, 'C')
+    pdf.cell(30, 10, 'Precio ($)', 1, 0, 'C')
+    pdf.cell(50, 10, 'Categoria', 1, 1, 'C')
+
+    # Filas de la tabla
+    pdf.set_font("Arial", '', 10)
+    for p in productos:
+        # Asegurarse de quitar o manejar los caracteres no soportados por fpdf
+        nombre = p.nombre.encode('latin-1', 'replace').decode('latin-1')
+        cat = p.categoria.encode('latin-1', 'replace').decode('latin-1')
+        
+        pdf.cell(10, 10, str(p.id), 1, 0, 'C')
+        pdf.cell(70, 10, nombre, 1, 0, 'L')
+        pdf.cell(25, 10, str(p.cantidad), 1, 0, 'C')
+        pdf.cell(30, 10, f"{p.precio:.2f}", 1, 0, 'C')
+        pdf.cell(50, 10, cat, 1, 1, 'L')
+
+    # Guardar en buffer en memoria y enviar
+    pdf_val = pdf.output(dest='S').encode('latin-1')
+    pdf_buffer = BytesIO(pdf_val)
+    
+    return send_file(
+        pdf_buffer, 
+        as_attachment=True, 
+        download_name='Reporte_Inventario.pdf', 
+        mimetype='application/pdf'
+    )
 
 if __name__ == '__main__':
     app.run(debug=True)
