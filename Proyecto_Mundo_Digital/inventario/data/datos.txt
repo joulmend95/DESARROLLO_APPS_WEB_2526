@@ -1,6 +1,9 @@
 # Inventario de Productos - Formato TXT
 # Formato: ID|Nombre|Cantidad|Precio|Categoria
 #============================================================
-1|Mouse Logitec 502 Hero|3|96.50|Periféricos
+1|Mouse Logitec 502 Hero|2|96.50|Periféricos
 2|laptop lenovo |8|700.00|Laptops
-3|Teclado Royal Kage|1|45.00|Periféricos
+3|Teclado Royal Kage|0|45.00|Periféricos
+4|ASUS ZenScreen Monitor USB portátil de 16 pulgadas|5|94.99|Monitores
+5|ASUS VivoBook Pro 15 OLED |2|845.6|Laptops
+6|Mouse Logitech G203|6|23.99|Periféricos

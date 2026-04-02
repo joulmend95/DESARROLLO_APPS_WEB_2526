@@ -1,5 +1,12 @@
 [
     {
+        "id": 4,
+        "cliente_nombre": "Byron Mendosa",
+        "cliente_email": "jorgemendosa6a2l24@gmail.com",
+        "fecha": "2026-04-02 00:06:54",
+        "total": 987.1
+    },
+    {
         "id": 3,
         "cliente_nombre": "Jorge",
         "cliente_email": "jorgemendosa78@gmail.com",

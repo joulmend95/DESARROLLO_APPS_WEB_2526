@@ -1,4 +1,7 @@
 id,nombre,cantidad,precio,categoria,estado
-1,Mouse Logitec 502 Hero,3,96.50,Periféricos,Disponible
+1,Mouse Logitec 502 Hero,2,96.50,Periféricos,Disponible
 2,laptop lenovo ,8,700.00,Laptops,Disponible
-3,Teclado Royal Kage,1,45.00,Periféricos,Disponible
+3,Teclado Royal Kage,0,45.00,Periféricos,Agotado
+4,ASUS ZenScreen Monitor USB portátil de 16 pulgadas,5,94.99,Monitores,Disponible
+5,ASUS VivoBook Pro 15 OLED ,2,845.6,Laptops,Disponible
+6,Mouse Logitech G203,6,23.99,Periféricos,Disponible

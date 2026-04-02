@@ -1,12 +1,12 @@
 {
     "metadata": {
         "formato": "JSON",
-        "total_productos": 3,
+        "total_productos": 6,
         "descripcion": "Inventario de productos en formato JSON"
     },
     "productos": [
         {
             "id": 1,
             "nombre": "Mouse Logitec 502 Hero",
-            "cantidad": 3,
+            "cantidad": 2,
             "precio": 
